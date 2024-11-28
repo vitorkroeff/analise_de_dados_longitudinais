@@ -24,5 +24,6 @@ dados$sexo <- as.factor(dados$sexo)
 # Análise gráfica
 
 
-barplot(table(as.factor(dados$sexo)))
+barplot(table(as.factor(dados$sexo))) # distribuição por genero
+ 
 
