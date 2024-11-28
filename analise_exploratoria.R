@@ -22,4 +22,3 @@ tempos #mesmo número de medidas, sem perda de acompanhamento
 
 
 
-
