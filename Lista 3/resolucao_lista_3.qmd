@@ -12,12 +12,18 @@ pacman::p_load(reshape, plyr, ggplot2, gridExtra, mice, geepack, nlme)
 
 # Questão 1
 
-## a)
+## a) {.smaller}
 
 ```{r, warning=FALSE, message=FALSE}
-dados <- tibble(foreign::read.dta("Lista 3/toenail.dta"))
+dados <- tibble(foreign::read.dta("toenail.dta"))
 ajuste_gee <-geeglm(y ~ trt * month - trt,family = binomial(link = "logit"),
                     data = dados,id = id,corstr = "exchangeable")
-summary(ajuste_gee)
+```
+## b)
+
+```{r, warning=FALSE, message=FALSE}
+exp(ajuste_gee$coefficients)
+
 ```
 
+ESCREVER
