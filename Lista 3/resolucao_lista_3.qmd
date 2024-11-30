@@ -1,0 +1,23 @@
+---
+title: "Resolução da Lista 3 - Análise de Dados Longitudinais"
+author: "Helen Lourenço e Vitor Kroeff"
+format: docx
+editor: visual
+---
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+require(dplyr)
+pacman::p_load(reshape, plyr, ggplot2, gridExtra, mice, geepack, nlme)
+```
+
+# Questão 1
+
+## a)
+
+```{r, warning=FALSE, message=FALSE}
+dados <- tibble(foreign::read.dta("Lista 3/toenail.dta"))
+ajuste_gee <-geeglm(y ~ trt * month - trt,family = binomial(link = "logit"),
+                    data = dados,id = id,corstr = "exchangeable")
+summary(ajuste_gee)
+```
+
