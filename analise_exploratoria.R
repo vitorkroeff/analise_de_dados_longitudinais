@@ -30,7 +30,7 @@ dados$sexo <- as.factor(dados$sexo)
 barplot(table(as.factor(dados$sexo))) # distribuição por genero
  
 
-# Transformando os dados em fortmato longo
+# Transformando os dados em fortmato longo # ERRADO PRECISA PASSAR VARIOS PARA LONGO
 # Ver se tem um id de paciente
 dados_longos <- dados %>% pivot_longer(
     cols = starts_with("t"),               
@@ -38,3 +38,6 @@ dados_longos <- dados %>% pivot_longer(
     values_to = "citocina_t",              
     names_prefix = "t"                    
 )
+
+
+View(dados)
