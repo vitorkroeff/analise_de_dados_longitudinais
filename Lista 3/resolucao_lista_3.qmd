@@ -43,7 +43,6 @@ summary(ajuste_gee)
 
 Com base no p-valor associado ao $\beta_3$, não parece ter uma diferençã significativa entre os tratamentos aplicados nos Grupos A e B. Também com base nos coeficientes do modelos, podemos observar que essa chance de desnvolver uma onicólise sereve diminui com o passar dos meses.
 
-
 ## e)
 
 ```{r}
@@ -54,18 +53,17 @@ ajuste_misto <-lme4::glmer(
   data = dados)
 ```
 
-
 ## f)
 
 Como o efeito aleatório está apenas no intercepto, vimos a seguinte relação aproximada entre entre os coeficientes do modelo marginal e aqueles do modelo de efeitos aleatórios.
 
 $$\beta_M = \frac{\beta_{EA}}{\sqrt{1 + \frac{16\sqrt3}{15 \pi}}\sigma^2_b}$$
+
 ```{r, warning=FALSE, message=FALSE, echo=T}
 var_bi <- lme4::VarCorr(ajuste_misto)
 var_bi
 
 ```
-
 
 ```{r, warning=FALSE, message=FALSE, echo=T}
 var_bi <- sqrt(as.numeric(var_bi)) # Conversão para númerico
@@ -73,8 +71,8 @@ fator <- sqrt(1 + (16*sqrt(3)/(15*pi)*var_bi))
 fator
 ```
 
-
 Podemos comparar as magnitudes dos efeitos da seguinte forma:
+
 ```{r, warning=FALSE, message=FALSE, echo=T}
 b.gee <- summary(ajuste_gee)$coef[,1]
 b.lme <- summary(ajuste_misto)$coef[,1]
@@ -86,7 +84,6 @@ round(cbind(b.gee, or.gee = exp(b.gee), p.gee, b.lme, or.lme = exp(b.lme), p.lme
 ```
 
 Podemos observar estimativas maiores para o modelo misto em relação ao GEE, mas com o mesmo sinal, indicando uma concordância dos efeitos das variáveis.
-
 
 ## g)
 
@@ -109,7 +106,7 @@ A interpretação é muito próxima a do modelo GEE, onde $\beta_2$ está associ
 
 ```{r, warning=FALSE, message=FALSE, echo=F}
 dados_rats <- janitor::clean_names(
-    tibble(xlsx::read.xlsx("Lista 3/rats.xlsx", sheetIndex = 1)))
+    tibble(xlsx::read.xlsx("rats.xlsx", sheetIndex = 1)))
 ```
 
 ```{r, warning=FALSE, message=FALSE, echo=T}
@@ -121,7 +118,7 @@ ajuste_gee_simetria <- geeglm(response ~ group * time,data = dados_rats,
                          id = subject,corstr = "exchangeable")
 
 ajuste_gee_ar1 <- geeglm(response ~ group * time,data = dados_rats,
-                         id = subject,corstr = "AR-M")
+                         id = subject,corstr = "ar1")
 
 ajuste_gee_unstructured <- geeglm(response ~ group * time,data = dados_rats,
                          id = subject,corstr = "unstructured")
@@ -132,13 +129,32 @@ ajuste_gee_unstructured <- geeglm(response ~ group * time,data = dados_rats,
 
 Nos ajustes realizados na alternativa anterior $Y_{ij}$(`response`) segue uma distribuição Normal com diferentes formas de estimar a matriz de coreelção. Dentre as ajustas estão (em ordem):
 
-- *Independete:* 
+-   **Independete***:* Nenhuma correlação entre as observações repetidas.
 
-- *Simetria Composta:*
+-   **Simetria Composta***:* Todas as observações dentro de um indivíduo têm a mesma correlação.
 
-- *AR(1):*
+-   **AR(1)***:* As observações mais próximas no tempo têm maior correlação.
 
-- *Não Estruturada:*
+-   **Não Estruturad***a:* A correlação entre cada par de observações é estimada de forma independente.
 
-ssh-keygen -t rsa -b 4096 -C "seu_email@exemplo.com"
+## c)
 
+FAZER
+
+## d)
+
+Primeiro podemos observar a estrutura da matriz de correlação da base como um todo e depois de cada grupo. Abaixo temos a matriz de correlação geral da base:
+
+```{r, warning=FALSE, message=FALSE, echo=T}
+dados_largo <- reshape::cast(dados_rats, subject ~ time, value = "response")
+dados_largo <- na.omit(dados_largo)
+round(cor(dados_largo[,2:7]),2)
+```
+
+E para os diferentes grupos:
+
+FAZER
+
+# Questão 3
+
+## a)

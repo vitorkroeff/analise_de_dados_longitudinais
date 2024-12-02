@@ -54,18 +54,24 @@ exp(summary(ajuste_misto)$coef)
 
 
 # Questão 2
-
+require(dplyr)
+pacman::p_load(reshape, plyr, ggplot2, gridExtra, mice, geepack, nlme, lme4, Matrix, janitor)
 dados_rats <- janitor::clean_names(
     tibble(xlsx::read.xlsx("Lista 3/rats.xlsx", sheetIndex = 1)))
 
-## a)
+ajuste_gee_ind <- geeglm(response ~ group * time,data = dados_rats,
+                         id = subject,corstr = "independence")
 
-table(dados_rats$subject)
+ajuste_gee_simetria <- geeglm(response ~ group * time,data = dados_rats,
+                              id = subject,corstr = "exchangeable")
 
-ajuste_gee_ind <- geeglm(response ~ group * time,
-                         data = dados_rats,
-                         id = subject,
-                         corstr = "independence")
+ajuste_gee_ar1 <- geeglm(response ~ group * time,data = dados_rats,
+                         id = subject,corstr = "ar1")
 
+ajuste_gee_unstructured <- geeglm(response ~ group * time,data = dados_rats,
+                                  id = subject,corstr = "unstructured")
 
+dados_largo <- reshape::cast(dados_rats, subject ~ time, value = "response")
+dados_largo <- na.omit(dados_largo)
+round(cor(dados_largo[,2:7]),2)
 
