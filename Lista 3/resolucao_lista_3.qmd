@@ -158,3 +158,16 @@ FAZER
 # Questão 3
 
 ## a)
+
+```{r, warning=FALSE, message=FALSE, echo=T}
+ajuste_misto_intercept <- lme4::lmer(response ~ group*time + (1|subject), data = dados_rats) # Intercpto aleatório
+
+ajuste_misto_tempo <- lme4::lmer(response ~ group * time + (1 + time | subject), data = dados_rats) # Intercepto e Tempo aleatório
+```
+
+Ambos os modelos ajustado assumem que $ Y_{ij}|b_i\sim N(\mu, \sigma)$ e que os $b_i(b_{0i}, b_{1i}) \sim N(0, \Sigma)$. Onde $b_{0i}$ é o efeito aleatório do intercepto e $b_{1i}$ do tempo.
+
+
+## b)
+
+

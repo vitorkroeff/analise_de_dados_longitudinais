@@ -75,3 +75,10 @@ dados_largo <- reshape::cast(dados_rats, subject ~ time, value = "response")
 dados_largo <- na.omit(dados_largo)
 round(cor(dados_largo[,2:7]),2)
 
+
+# Questão 3
+
+ajuste_misto_intercept <- lme4::lmer(response ~ group*time + (1|subject), data = dados_rats)
+
+ajuste_misto_tempo <- lme4::lmer(response ~ group * time + (1 + time | subject), data = dados_rats)
+
