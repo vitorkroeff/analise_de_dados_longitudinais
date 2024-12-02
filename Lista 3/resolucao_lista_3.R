@@ -27,4 +27,11 @@ exp(ajuste_gee$coefficients)
 exp(ajuste_gee$coefficients)
 
 # D)
+dados$id
+require(lme4)
+require(Matrix)
+ajuste_misto <-glmer(
+    formula = y ~ month + trt*month + (1|id), 
+    family = binomial(link = "logit"),         
+    data = dados)
 

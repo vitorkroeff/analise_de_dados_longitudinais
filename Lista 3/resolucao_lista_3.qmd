@@ -7,7 +7,7 @@ editor: visual
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 require(dplyr)
-pacman::p_load(reshape, plyr, ggplot2, gridExtra, mice, geepack, nlme)
+pacman::p_load(reshape, plyr, ggplot2, gridExtra, mice, geepack, nlme, lme4, Matrix)
 ```
 
 # Questão 1
@@ -26,4 +26,28 @@ exp(ajuste_gee$coefficients)
 
 ```
 
-ESCREVER
+O coeficiente $\beta_2$ está relacionado ao efeito do tempo no grupo de tratamento A (ou controle). O expoente $e^{\beta_2}$ representa uma razão de chances. Essa razão de chances indica que, no grupo A, o coeficiente está associado a uma redução na probabilidade de ocorrência de onicólise com o passar dos meses.
+
+## c)
+
+O coefiente $\beta_3$ está associado a interação entre o tratamento B e o tempo em meses. Assim como na alternativa anterior, vemos que $e^{\beta_3} = 0,925$ está assciado a uma reduzação das chances de ocorrência de onicólise com o passar dos meses, porém uma redução menor que a do grupo controle.
+
+## d){.smaller}
+
+Podemos observar o `summary` do modelo ajustado como sendo:
+
+```{r}
+summary(ajuste_gee)
+```
+Com base no p-valor associado ao $\beta_3$, não parece ter uma diferençã significativa entre os tratamentos aplicados nos Grupos A e B. Também com base nos coeficientes do modelos, podemos observar que essa chance de desnvolver uma onicólise sereve diminui com o passar dos meses.
+
+## e)
+
+```{r}
+
+ajuste_misto <-lme4::glmer(
+  formula = y ~ month + trt:month + (1 | id), 
+  family = binomial(link = "logit"),         
+  data = dados)
+```
+
