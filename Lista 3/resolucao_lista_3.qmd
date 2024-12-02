@@ -1,13 +1,13 @@
 ---
 title: "Resolução da Lista 3 - Análise de Dados Longitudinais"
 author: "Helen Lourenço e Vitor Kroeff"
-format: docx
+format: pdf
 editor: visual
 ---
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 require(dplyr)
-pacman::p_load(reshape, plyr, ggplot2, gridExtra, mice, geepack, nlme, lme4, Matrix)
+pacman::p_load(reshape, plyr, ggplot2, gridExtra, mice, geepack, nlme, lme4, Matrix, janitor)
 ```
 
 # Questão 1
@@ -19,6 +19,7 @@ dados <- tibble(foreign::read.dta("toenail.dta"))
 ajuste_gee <-geeglm(y ~ trt * month - trt,family = binomial(link = "logit"),
                     data = dados,id = id,corstr = "exchangeable")
 ```
+
 ## b)
 
 ```{r, warning=FALSE, message=FALSE}
@@ -32,14 +33,16 @@ O coeficiente $\beta_2$ está relacionado ao efeito do tempo no grupo de tratame
 
 O coefiente $\beta_3$ está associado a interação entre o tratamento B e o tempo em meses. Assim como na alternativa anterior, vemos que $e^{\beta_3} = 0,925$ está assciado a uma reduzação das chances de ocorrência de onicólise com o passar dos meses, porém uma redução menor que a do grupo controle.
 
-## d){.smaller}
+## d) {.smaller}
 
 Podemos observar o `summary` do modelo ajustado como sendo:
 
 ```{r}
 summary(ajuste_gee)
 ```
+
 Com base no p-valor associado ao $\beta_3$, não parece ter uma diferençã significativa entre os tratamentos aplicados nos Grupos A e B. Também com base nos coeficientes do modelos, podemos observar que essa chance de desnvolver uma onicólise sereve diminui com o passar dos meses.
+
 
 ## e)
 
@@ -50,4 +53,92 @@ ajuste_misto <-lme4::glmer(
   family = binomial(link = "logit"),         
   data = dados)
 ```
+
+
+## f)
+
+Como o efeito aleatório está apenas no intercepto, vimos a seguinte relação aproximada entre entre os coeficientes do modelo marginal e aqueles do modelo de efeitos aleatórios.
+
+$$\beta_M = \frac{\beta_{EA}}{\sqrt{1 + \frac{16\sqrt3}{15 \pi}}\sigma^2_b}$$
+```{r, warning=FALSE, message=FALSE, echo=T}
+var_bi <- lme4::VarCorr(ajuste_misto)
+var_bi
+
+```
+
+
+```{r, warning=FALSE, message=FALSE, echo=T}
+var_bi <- sqrt(as.numeric(var_bi)) # Conversão para númerico
+fator <- sqrt(1 + (16*sqrt(3)/(15*pi)*var_bi))
+fator
+```
+
+
+Podemos comparar as magnitudes dos efeitos da seguinte forma:
+```{r, warning=FALSE, message=FALSE, echo=T}
+b.gee <- summary(ajuste_gee)$coef[,1]
+b.lme <- summary(ajuste_misto)$coef[,1]
+p.gee <- summary(ajuste_gee)$coef[,4]
+p.lme <- summary(ajuste_misto)$coef[,4]
+round(cbind(b.gee, or.gee = exp(b.gee), p.gee, b.lme, or.lme = exp(b.lme), p.lme,
+            razao.b = b.lme/b.gee), 3)
+
+```
+
+Podemos observar estimativas maiores para o modelo misto em relação ao GEE, mas com o mesmo sinal, indicando uma concordância dos efeitos das variáveis.
+
+
+## g)
+
+```{r, warning=FALSE, message=FALSE, echo=T}
+knitr::kable(
+exp(summary(ajuste_misto)$coef))
+```
+
+A interpretação é muito próxima a do modelo GEE, onde $\beta_2$ está associada a variação no mês no grupo A (controle), porém está sendo levado em conta a variação de cada paciente do grupo A por conta do efeito aleatório no intercepto.
+
+## h)
+
+## i)
+
+## j)
+
+# Questão 2
+
+## a)
+
+```{r, warning=FALSE, message=FALSE, echo=F}
+dados_rats <- janitor::clean_names(
+    tibble(xlsx::read.xlsx("Lista 3/rats.xlsx", sheetIndex = 1)))
+```
+
+```{r, warning=FALSE, message=FALSE, echo=T}
+
+ajuste_gee_ind <- geeglm(response ~ group * time,data = dados_rats,
+                         id = subject,corstr = "independence")
+
+ajuste_gee_simetria <- geeglm(response ~ group * time,data = dados_rats,
+                         id = subject,corstr = "exchangeable")
+
+ajuste_gee_ar1 <- geeglm(response ~ group * time,data = dados_rats,
+                         id = subject,corstr = "AR-M")
+
+ajuste_gee_unstructured <- geeglm(response ~ group * time,data = dados_rats,
+                         id = subject,corstr = "unstructured")
+
+```
+
+## b)
+
+Nos ajustes realizados na alternativa anterior $Y_{ij}$(`response`) segue uma distribuição Normal com diferentes formas de estimar a matriz de coreelção. Dentre as ajustas estão (em ordem):
+
+- *Independete:* 
+
+- *Simetria Composta:*
+
+- *AR(1):*
+
+- *Não Estruturada:*
+
+ssh-keygen -t rsa -b 4096 -C "seu_email@exemplo.com"
 
