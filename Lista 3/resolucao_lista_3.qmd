@@ -3,6 +3,9 @@ title: "Resolução da Lista 3 - Análise de Dados Longitudinais"
 author: "Helen Lourenço e Vitor Kroeff"
 format: pdf
 editor: visual
+include-in-header:
+  text: |
+   \usepackage{authblk}
 ---
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
@@ -129,31 +132,48 @@ ajuste_gee_unstructured <- geeglm(response ~ group * time,data = dados_rats,
 
 Nos ajustes realizados na alternativa anterior $Y_{ij}$(`response`) segue uma distribuição Normal com diferentes formas de estimar a matriz de coreelção. Dentre as ajustas estão (em ordem):
 
--   **Independete***:* Nenhuma correlação entre as observações repetidas.
+-   **Independete**:Nenhuma correlação entre as observações repetidas.
 
--   **Simetria Composta***:* Todas as observações dentro de um indivíduo têm a mesma correlação.
+-   **Simetria Composta**: Todas as observações dentro de um indivíduo têm a mesma correlação.
 
--   **AR(1)***:* As observações mais próximas no tempo têm maior correlação.
+-   **AR(1)**: As observações mais próximas no tempo têm maior correlação.
 
--   **Não Estruturad***a:* A correlação entre cada par de observações é estimada de forma independente.
+-   **Não Estruturada**: A correlação entre cada par de observações é estimada de forma independente.
 
 ## c)
 
-FAZER
+Podemos comparar cada um dos modelos ajustados na alternativa **a)** e comparar com a sua respectiva estrutura do modelo `gls()` da seguinte forma:
+
+- Independente
+
+Para os modelos com matriz de correlação independentes, podemos observar que o valor dos coeficientes é praticamento o mesmo, porém o p-valor associado as variáveis do modelo GLS aparenta ser menos significativo.
+
+```{r, warning=FALSE, message=FALSE, echo=T}
+dados_rats <- na.omit(dados_rats)
+
+summary(ajuste_gee_ind)$coefficients # Ajuste GEE
+
+ajuste_gls_ind <- gls(response ~ group * time,data = dados_rats)
+summary(ajuste_gls_ind) # Ajuste GLS
+
+```
+
+- Simetria Composta
+
+CONTINUAR
 
 ## d)
 
-Primeiro podemos observar a estrutura da matriz de correlação da base como um todo e depois de cada grupo. Abaixo temos a matriz de correlação geral da base:
+Consideramos o ajuste `ajuste_gee_unstructured` (Não Estruturada), como o mais adequado aos dados. abaixos temos o resultado do `summary`do modelo.
+
 
 ```{r, warning=FALSE, message=FALSE, echo=T}
-dados_largo <- reshape::cast(dados_rats, subject ~ time, value = "response")
-dados_largo <- na.omit(dados_largo)
-round(cor(dados_largo[,2:7]),2)
+
+summary(ajuste_gee_unstructured)$coefficients
+
 ```
 
-E para os diferentes grupos:
-
-FAZER
+Com base nos resultados, podemos observar que as variáveis `time` e interação de tempo e grupo (`group::time`), não são significativas a um nível de 5%. Mas podemos ver que o efeito de grupo é significativo.
 
 # Questão 3
 
@@ -165,9 +185,15 @@ ajuste_misto_intercept <- lme4::lmer(response ~ group*time + (1|subject), data =
 ajuste_misto_tempo <- lme4::lmer(response ~ group * time + (1 + time | subject), data = dados_rats) # Intercepto e Tempo aleatório
 ```
 
-Ambos os modelos ajustado assumem que $ Y_{ij}|b_i\sim N(\mu, \sigma)$ e que os $b_i(b_{0i}, b_{1i}) \sim N(0, \Sigma)$. Onde $b_{0i}$ é o efeito aleatório do intercepto e $b_{1i}$ do tempo.
-
+Ambos os modelos ajustado assumem que \$ Y\_{ij}\|b_i\sim N(\mu, \sigma)\$ e que os $b_i(b_{0i}, b_{1i}) \sim N(0, \Sigma)$. Onde $b_{0i}$ é o efeito aleatório do intercepto e $b_{1i}$ do tempo.
 
 ## b)
 
+Nos modelos ajustados no item `a)` temos a seguinte relação de parâmetros:
 
+| Modelo                 | Efeitos fixos | Efeitos aleatórios | Total de parâmetros |
+|--------------------|-----------------|-----------------|------------------|
+| ajuste_misto_intercept | 4             | 2                  | 6                   |
+| ajuste_misto_tempo     | 4             | 4                  | 8                   |
+
+: Modelos Mistos

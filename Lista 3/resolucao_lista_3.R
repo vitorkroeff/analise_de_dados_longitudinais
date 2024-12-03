@@ -58,7 +58,7 @@ require(dplyr)
 pacman::p_load(reshape, plyr, ggplot2, gridExtra, mice, geepack, nlme, lme4, Matrix, janitor)
 dados_rats <- janitor::clean_names(
     tibble(xlsx::read.xlsx("Lista 3/rats.xlsx", sheetIndex = 1)))
-
+dados_rats <- na.omit(dados_rats)
 ajuste_gee_ind <- geeglm(response ~ group * time,data = dados_rats,
                          id = subject,corstr = "independence")
 
@@ -82,3 +82,9 @@ ajuste_misto_intercept <- lme4::lmer(response ~ group*time + (1|subject), data =
 
 ajuste_misto_tempo <- lme4::lmer(response ~ group * time + (1 + time | subject), data = dados_rats)
 
+
+
+ajuste_gee_ar1$a
+knitr::kable(aic_values)
+
+AIC(ajuste_gee_ar1)
