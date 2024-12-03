@@ -162,6 +162,13 @@ summary(ajuste_gls_ind) # Ajuste GLS
 
 CONTINUAR
 
+- AR(1)
+FAZER
+
+- Não Estuturada
+
+Fazeer
+
 ## d)
 
 Consideramos o ajuste `ajuste_gee_unstructured` (Não Estruturada), como o mais adequado aos dados. abaixos temos o resultado do `summary`do modelo.
