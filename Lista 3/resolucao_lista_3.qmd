@@ -10,7 +10,7 @@ include-in-header:
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 require(dplyr)
-pacman::p_load(reshape, plyr, ggplot2, gridExtra, mice, geepack, nlme, lme4, Matrix, janitor)
+pacman::p_load(reshape, plyr, ggplot2, gridExtra, mice, geepack, nlme, lme4, Matrix, janitor, nmle)
 ```
 
 # Questão 1
@@ -44,9 +44,11 @@ Podemos observar o `summary` do modelo ajustado como sendo:
 summary(ajuste_gee)
 ```
 
-Com base no p-valor associado ao $\beta_3$, não parece ter uma diferençã significativa entre os tratamentos aplicados nos Grupos A e B. Também com base nos coeficientes do modelos, podemos observar que essa chance de desnvolver uma onicólise sereve diminui com o passar dos meses.
+Com base no p-valor associado ao $\beta_3$, não parece haver uma diferença significativa entre os tratamentos aplicados nos Grupos A e B. Também com base nos coeficientes do modelos, podemos observar que essa chance de desnvolver uma onicólise severa diminui com o passar dos meses.
 
 ## e)
+
+O modelo pode ser ajustado como:
 
 ```{r}
 
@@ -92,21 +94,39 @@ Podemos observar estimativas maiores para o modelo misto em relação ao GEE, ma
 
 ```{r, warning=FALSE, message=FALSE, echo=T}
 knitr::kable(
-exp(summary(ajuste_misto)$coef))
+exp(summary(ajuste_misto)$coef)) # Exponencial dos parâmetros do modelo
 ```
 
 A interpretação é muito próxima a do modelo GEE, onde $\beta_2$ está associada a variação no mês no grupo A (controle), porém está sendo levado em conta a variação de cada paciente do grupo A por conta do efeito aleatório no intercepto.
 
 ## h)
 
+O coeficiente $\beta_3$ está relacionado na interação entre o grupo B e o tempo em meses. Assim como comentado na alternativa anterior, está sendo levado em conta a variação dentro dos indivíduos do grupo por conta do efeito aleatório no intercepto do modelo ajustado.
+
 ## i)
 
-## j)
+- Ajuste do modelo GEE
+
+```{r, warning=FALSE, message=FALSE, echo=T}
+summary(ajuste_gee)$coefficients
+```
+
+- Ajuste do modelo misto
+
+```{r, warning=FALSE, message=FALSE, echo=T}
+summary(ajuste_misto)$coef
+```
+
+Podemos observar que o $\beta_3$ estimado no modelo GEE é consideravelmente menor em relação ao modelo misto. Além disso, a interação entre tratamento e tempo é significativa ao nível de 5% apenas no modelo misto. 
+
+Essa diferença nas estimativas ocorre devido à natureza dos modelos: o GEE utiliza uma matriz de correlação especificada (neste caso, simetria composta), focado estimativas marginais e ignorando a variação intra-indivíduo. Já o modelo misto incorpora efeitos aleatórios, que modelam a variação intra-indivíduo, resultando em estimativas condicionais aos indivíduos da base.
+
 
 # Questão 2
 
 ## a)
 
+Os modelos podem ser ajustados como:
 ```{r, warning=FALSE, message=FALSE, echo=F}
 dados_rats <- janitor::clean_names(
     tibble(xlsx::read.xlsx("rats.xlsx", sheetIndex = 1)))
@@ -144,7 +164,7 @@ Nos ajustes realizados na alternativa anterior $Y_{ij}$(`response`) segue uma di
 
 Podemos comparar cada um dos modelos ajustados na alternativa **a)** e comparar com a sua respectiva estrutura do modelo `gls()` da seguinte forma:
 
-- Independente
+### Independente
 
 Para os modelos com matriz de correlação independentes, podemos observar que o valor dos coeficientes é praticamento o mesmo, porém o p-valor associado as variáveis do modelo GLS aparenta ser menos significativo.
 
@@ -158,18 +178,46 @@ summary(ajuste_gls_ind) # Ajuste GLS
 
 ```
 
-- Simetria Composta
+### Simetria Composta
 
-CONTINUAR
+Novamente observamos um p-valor maior nos coeficientes do ajuste GLS. Nestes modelos podemos observar que o efeito de interação entre grupo e tempo é zero no modelo gls.
 
-- AR(1)
-FAZER
+```{r}
+summary(ajuste_gee_simetria)$coefficients # Ajuste GEE
+ajuste_gls_simetria <- gls(response ~ group * time,correlation= corCompSymm(form= ~1|subject),
+                      data = dados_rats)
+summary(ajuste_gls_simetria) # Ajuste GLS
 
-- Não Estuturada
+```
 
-Fazeer
+
+### AR(1)
+
+No caso da estrutura de correlações AR(1), podemos observar que o erro padrão do estimador GLS é muito superior ao do GEE, indicando que os modelos GLS são mais sensíveis a estrutura de correlação.
+
+```{r}
+summary(ajuste_gee_ar1)$coefficients # Ajuste GEE
+ajuste_gls_ar1 <- gls(response ~ group * time,correlation= corAR1(form= ~1|subject),
+                      data = dados_rats)
+summary(ajuste_gls_ar1) # Ajuste GLS
+
+```
+
+### Não Estruturada
+
+O caso não estruturado parece ser o que apresenta maior diferença entre os dois modelos, tanto no valor dos coeficientes, quanto no erro padrão associado a eles. O efeito de grupo parece ser bem mais forte no estimador GEE em comparação ao GLS, mas com um erro padrão muito mais alto também.
+
+```{r}
+summary(ajuste_gee_unstructured)$coefficients # Ajuste GEE
+ajuste_gls_unstructured <- gls(response ~ group * time,correlation= corSymm(form= ~1|subject),
+                      data = dados_rats)
+summary(ajuste_gls_unstructured) # Ajuste GLS
+
+```
+
 
 ## d)
+
 
 Consideramos o ajuste `ajuste_gee_unstructured` (Não Estruturada), como o mais adequado aos dados. abaixos temos o resultado do `summary`do modelo.
 
@@ -180,27 +228,97 @@ summary(ajuste_gee_unstructured)$coefficients
 
 ```
 
-Com base nos resultados, podemos observar que as variáveis `time` e interação de tempo e grupo (`group::time`), não são significativas a um nível de 5%. Mas podemos ver que o efeito de grupo é significativo.
+Com base nos resultados, podemos observar que as variáveis `time` e interação de tempo e grupo (`group * time`), não são significativas a um nível de 5%. Mas podemos ver que o efeito de grupo é significativo.
 
 # Questão 3
 
 ## a)
 
 ```{r, warning=FALSE, message=FALSE, echo=T}
-ajuste_misto_intercept <- lme4::lmer(response ~ group*time + (1|subject), data = dados_rats) # Intercpto aleatório
 
-ajuste_misto_tempo <- lme4::lmer(response ~ group * time + (1 + time | subject), data = dados_rats) # Intercepto e Tempo aleatório
+ajuste_misto_intercept <- lme(response ~ group*time, random = ~ 1 | subject, data = dados_rats) # Intercpto aleatório
+
+ajuste_misto_tempo <- lme(response ~ group * time,  random = ~ 1 + time | subject, data = dados_rats) # Intercepto e Tempo aleatório
 ```
 
 Ambos os modelos ajustado assumem que \$ Y\_{ij}\|b_i\sim N(\mu, \sigma)\$ e que os $b_i(b_{0i}, b_{1i}) \sim N(0, \Sigma)$. Onde $b_{0i}$ é o efeito aleatório do intercepto e $b_{1i}$ do tempo.
 
+
+
+
 ## b)
 
-Nos modelos ajustados no item `a)` temos a seguinte relação de parâmetros:
+Para o ajuste com apenas o intercepto aleatório (ajuste_misto_intercept ), interceptos diferentes geram correlações constantes entre todas observações do mesmo indivíduo.
 
-| Modelo                 | Efeitos fixos | Efeitos aleatórios | Total de parâmetros |
-|--------------------|-----------------|-----------------|------------------|
-| ajuste_misto_intercept | 4             | 2                  | 6                   |
-| ajuste_misto_tempo     | 4             | 4                  | 8                   |
+Já para o modelo com efeito aleatório no intercepto e no tempo, a correlação intraindivíduo varia ao longo do tempo.
 
-: Modelos Mistos
+
+## c)
+
+**Modelo com intercepto aleatório**: São estimados 3 parâmetros (variância do intercepto, variância residual e a média fixada).
+
+**Modelo com intercepto e tempo aleatórios**: São estimados 5 parâmetros (variâncias do intercepto, tempo, covariância entre eles e variância residual).
+
+**Modelos marginais (GEE)**: O número de parâmetros depende da estrutura de correlação. As estruturas mais complexas, como a não estruturada, estimam mais parâmetros.
+
+Ao dobrar as medidas repetidas, os modelos mistos mantém o mesmo número de parâmetros. Já o GEE, como o não estruturado, por exemplo, aumenta quadraticamente o número de parâmetros a serem estimados. Sendo assim, os modelos mistos acomodam melhor um número maior de medidas repetidas.
+
+## d)
+
+Com base no menor AIC e BIC, o modelo que parace se ajustar melhor aos dados é o com efeito aleatório apenas no intercepto.
+
+```{r, warning=FALSE, message=FALSE, echo=F}
+knitr::kable(
+data.frame(modelo = c('ajuste_misto_intercept','ajuste_misto_tempo' ),
+           AIC = c(AIC(ajuste_misto_intercept), AIC(ajuste_misto_tempo)),
+           BIC = c(BIC(ajuste_misto_intercept), BIC(ajuste_misto_tempo))))
+
+```
+
+## e)
+
+Podemos apresentar os efeitos aleatórios por meio da função `ranef()`, abaixo temos os resultados:
+
+```{r, warning=FALSE, message=FALSE, echo=T}
+head(ranef(ajuste_misto_intercept))
+
+```
+
+As estimativas da variância condicional podem ser encontradas como:
+
+```{r, warning=FALSE, message=FALSE, echo=T}
+
+getVarCov(ajuste_misto_intercept, type = 'conditional')
+
+```
+
+
+## f)
+
+Com base no `summary`do modelo selecionado, podemos observar com base no p-valor associado, que não parece ter um efeito significativo de grupo, nem na relação de tempo e grupo.
+
+```{r}
+summary(ajuste_misto_intercept)
+```
+
+## g)
+
+Abaixo temos um gráfico de resíduos padronizados versus os valores preditos para o grupo.
+
+```{r, warning=FALSE, message=FALSE, echo=F}
+
+par(mfrow = c(1, 1), cex = 1.5)  # Ajusta o tamanho dos textos e pontos
+plot(ajuste_misto_intercept, residuals(., type = "p") ~ fitted(.) | group)
+
+```
+
+
+Os redíduos se distribuem ao redor de zero com uma amplitude pequena no eixo y dos gráficos, indicando um bom ajuste do modelo aos dados nos diferentes grupos.
+
+## h)
+
+A escolha do modelo depende do contexto da análise. O modelo misto é ideal quando o objetivo é capturar a variação intraindivíduo, enquanto o modelo marginal (GEE) foca nas diferenças entre grupos ou tratamentos aplicados.
+
+De modo geral, o modelo marginal (GEE) é preferido, pois os coeficientes são mais fáceis de interpretar e ele é aplicável em uma ampla gama de situações. Já o modelo misto deve ser utilizado em estudos onde é essencial considerar a variação intraindivíduo como parte do objetivo principal da análise.
+
+
