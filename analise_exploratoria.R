@@ -143,5 +143,21 @@ dados_longos <- dados_longos %>% select(-c(obs_continua))
 knitr::kable(
 colSums(is.na(dados_brutos)) %>% arrange(desc(x))) # ARRUMAR
 
+## Comentar mais sobre
+
+# Ajuste GLS
+
+
+# Ajuste GEE
+
+
+# Modelo Misto
+
+# Resíduos
+
+# Considerações
+
+
+
 
 
