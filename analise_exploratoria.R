@@ -3,6 +3,7 @@ require(dplyr)
 require(ggplot2)
 require(tidyr)
 require(ggplot2)
+require(GGally)
 
 
 # Carregamento da base de dados
@@ -22,12 +23,12 @@ dados_brutos$id <- 1:length(dados_brutos$idade)
 # Seleção das variáveis do estudo
 ## eurob e euros medem risco de evento cardiáco, usar apenas uma delas.
 dados <- dados_brutos %>% select(c(id,sexo, idade,imc, 
-                                   nyha, has, iap, ai,
+                                   nyha, has, iap, ai, grupo,
                                    eurob, euroes, fc, creat,
                                    t1, t2, t3, t4, t5, t6,
-                                   grupo, n1anest, n2despin,
-                                   n3final, n42hpo, n56hpo,
-                                   n624hpo)) 
+                                   n1anest, n2despin,n3final,
+                                   n42hpo, n56hpo,n624hpo
+                                   )) 
 
 
 # Tratamento dos dados categoricos
@@ -39,7 +40,7 @@ dados$ai <- as.factor(dados$ai)
 dados$grupo <- as.factor(dados$grupo)
 
 # Tratamentos das variáveis de tempo em horas
-
+## NÃO FIZ
 
 
 # Descrições da base
@@ -50,7 +51,26 @@ summary(dados)
 head(dados)
 
 
- 
+dados %>% select(-c(t1, t2, t3, t4, t5, t6,
+                    n1anest, n2despin,n3final,
+                    n42hpo, n56hpo,n624hpo)) %>% ggpairs()
+
+# CORRELAÇÕES
+
+## Correlação de todos os pacientes
+round(cor(dados[,13:16]),2)
+
+## Correlação do grupo 0 
+
+round(cor(subset(dados, grupo == 0)[,13:16]),2)
+
+## Correlação do grupo 1
+
+round(cor(subset(dados, grupo == 1)[,13:16]),2)
+
+## Correlação do grupo 2
+
+round(cor(subset(dados, grupo == 2)[,13:16]),2)
 
 # Transformando os dados em fortmato longo
 ## Foram transformados em longo a resposta (t1, t2, ..., t6)
@@ -62,7 +82,55 @@ dados_longos <- dados %>% pivot_longer(
     values_to = "citocina_t",              
     names_prefix = "t"                    
 )
-
-
+head(dados_longos)
+View(dados_longos)
 # Não há perda de acompanhamento no estudo
 barplot(table(dados_longos$id))
+
+
+# Gráficos
+## Diferênça de gênero
+rotulos <- c('Inducação \nAnestésica', 'Despinçamento', 'Final \n cirurgia',
+             '2h após', '6h após', '24h após')
+
+dados_longos$obs_continua <- as.numeric(dados_longos$observacao) #variável continua para gráfico
+
+p1_sex<-ggplot(dados_longos, aes(x=obs_continua, y= citocina_t,color=sexo))+
+    geom_line(aes(group=id))+ theme(legend.position="top")+
+    labs(x="Observações") + theme_minimal()+
+    scale_x_continuous(breaks = seq_along(rotulos), labels = rotulos )
+p1_sex + geom_smooth(method = "loess", se = FALSE, size = 2)
+
+
+p2_sex<-ggplot(dados_longos, aes(x=observacao,y=citocina_t,fill=sexo))+
+    geom_boxplot(notch=TRUE) +theme(legend.position="top") +
+    stat_summary(fun="mean",geom="point",size=2,color="white",
+                 position=position_dodge(width=0.75),show.legend=FALSE) +
+    labs(x="Observações") + theme_minimal() + 
+    scale_x_discrete(breaks = seq_along(rotulos), labels = rotulos )
+p2_sex
+
+
+## Diferença de grupo
+p1_grupo<-ggplot(dados_longos, aes(x=obs_continua, y= citocina_t,color=grupo))+
+    geom_line(aes(group=id))+ theme(legend.position="top")+
+    labs(x="Observações") + theme_minimal()+
+    scale_x_continuous(breaks = seq_along(rotulos), labels = rotulos )
+p1_grupo + geom_smooth(method = "loess", se = FALSE, size = 2)
+
+
+
+p2_grupo<-ggplot(dados_longos, aes(x=observacao,y=citocina_t,fill=grupo))+
+    geom_boxplot(notch=TRUE) +theme(legend.position="top") +
+    stat_summary(fun="mean",geom="point",size=2,color="white",
+                 position=position_dodge(width=0.75),show.legend=FALSE) +
+    labs(x="Observações") + theme_minimal() + 
+    scale_x_discrete(breaks = seq_along(rotulos), labels = rotulos )
+
+p2_grupo
+
+### excluimos da base a variável contínua
+dados_longos <- dados_longos %>% select(-c(obs_continua))
+
+
+# 
