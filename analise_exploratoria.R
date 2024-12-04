@@ -2,32 +2,38 @@
 require(dplyr)
 require(ggplot2)
 require(tidyr)
+require(ggplot2)
 
 
 # Carregamento da base de dados
 
-dados <- tibble(read.table('base_de_dados.txt', header = T)) # Base do github
+dados_brutos <- tibble(read.table('base_de_dados.txt', header = T)) # Base do github
+
+# Seleção das variáveis do estudo
+
+dados <- dados_brutos %>% select(c(sexo, idade,imc, 
+                                   nyha, has, iap, ai,
+                                   eurob, euroes, fc, creat,
+                                   t1, t2, t3, t4, t5, t6))
+
 head(dados)
 
-str(dados)
+# Tratamento dos dados categoricos
+dados$sexo <- as.factor(ifelse(dados$sexo <2, 'M', 'F' ))
+dados$nyha <- as.factor(dados$sexo)
+
+factor()
 summary(dados)
 
-tempos <- c(sum(is.na(dados$t1)), sum(is.na(dados$t2)), sum(is.na(dados$t3)),
-            sum(is.na(dados$t4)), sum(is.na(dados$t5)), sum(is.na(dados$t6)))
 
-# correlacão
-
-View(dados)
-
-
-# Tratamento dos dados
-
-dados$sexo <- as.factor(dados$sexo)
 
 # Análise gráfica Colocar mais coisas
 
 
-barplot(table(as.factor(dados$sexo))) # distribuição por genero
+barplot(dados$sexo)
+# distribuição por genero
+
+
  
 
 # Transformando os dados em fortmato longo # ERRADO PRECISA PASSAR VARIOS PARA LONGO
@@ -40,4 +46,4 @@ dados_longos <- dados %>% pivot_longer(
 )
 
 
-View(dados)
+table(dados_longos$tempo)
