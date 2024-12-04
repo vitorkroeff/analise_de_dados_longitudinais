@@ -16,16 +16,18 @@ dados_brutos$n56hpo[6] <- 1130
 # Criação de um id para os pacientes
 
 dados_brutos$id <- 1:length(dados_brutos$idade)
-View(dados_brutos)
+
+
+
 # Seleção das variáveis do estudo
-
 ## eurob e euros medem risco de evento cardiáco, usar apenas uma delas.
-
 dados <- dados_brutos %>% select(c(id,sexo, idade,imc, 
                                    nyha, has, iap, ai,
                                    eurob, euroes, fc, creat,
                                    t1, t2, t3, t4, t5, t6,
-                                   grupo)) 
+                                   grupo, n1anest, n2despin,
+                                   n3final, n42hpo, n56hpo,
+                                   n624hpo)) 
 
 
 # Tratamento dos dados categoricos
@@ -36,24 +38,25 @@ dados$iap <- as.factor(dados$iap)
 dados$ai <- as.factor(dados$ai)
 dados$grupo <- as.factor(dados$grupo)
 
+
+# Descrições da base
 str(dados)
 summary(dados)
 
-# Primeiras linhas da base
+## Primeiras linhas da base
 head(dados)
 
-View(dados)
 
-# Análise gráfica
 
-## Evolução por gênero
-View(dados)
+
 
 
  
 
 # Transformando os dados em fortmato longo
-# Ver se tem um id de paciente
+## Foram transformados em longo a resposta (t1, t2, ..., t6)
+## E as variáveis de tempo n1anest, ..., n62hpo
+
 dados_longos <- dados %>% pivot_longer(
     cols = starts_with("t"),               
     names_to = "observacao",                   
