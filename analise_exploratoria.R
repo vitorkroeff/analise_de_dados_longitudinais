@@ -38,6 +38,9 @@ dados$iap <- as.factor(dados$iap)
 dados$ai <- as.factor(dados$ai)
 dados$grupo <- as.factor(dados$grupo)
 
+# Tratamentos das variáveis de tempo em horas
+
+
 
 # Descrições da base
 str(dados)
@@ -47,15 +50,11 @@ summary(dados)
 head(dados)
 
 
-
-
-
-
  
 
 # Transformando os dados em fortmato longo
 ## Foram transformados em longo a resposta (t1, t2, ..., t6)
-## E as variáveis de tempo n1anest, ..., n62hpo
+## As variáveis de tempo n1anest, ..., n62hpo foram ignoradas (NÂO SEI SE ESTÁ CORRETO)
 
 dados_longos <- dados %>% pivot_longer(
     cols = starts_with("t"),               
