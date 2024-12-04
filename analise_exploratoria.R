@@ -21,15 +21,23 @@ dados_brutos$id <- 1:length(dados_brutos$idade)
 
 
 # Seleção das variáveis do estudo
-## eurob e euros medem risco de evento cardiáco, usar apenas uma delas.
-dados <- dados_brutos %>% select(c(id,sexo, idade,imc, 
+## IMPORTANTE
+### eurob e euros medem risco de evento cardiáco, usar apenas uma delas
+
+dados <- dados_brutos %>% select(c(id,sexo, idade,imc, fc,
                                    nyha, has, iap, ai, grupo,
-                                   eurob, euroes, fc, creat,
+                                   euroes, fc, creat,
                                    t1, t2, t3, t4, t5, t6,
                                    n1anest, n2despin,n3final,
                                    n42hpo, n56hpo,n624hpo
                                    )) 
 
+
+## GGpairs das covariáveis
+
+dados %>% select(-c(t1, t2, t3, t4, t5, t6,
+                    n1anest, n2despin,n3final,
+                    n42hpo, n56hpo,n624hpo)) %>% ggpairs()
 
 # Tratamento dos dados categoricos
 dados$sexo <- as.factor(ifelse(dados$sexo== 1, 'M', 'F' ))
@@ -50,10 +58,6 @@ summary(dados)
 ## Primeiras linhas da base
 head(dados)
 
-
-dados %>% select(-c(t1, t2, t3, t4, t5, t6,
-                    n1anest, n2despin,n3final,
-                    n42hpo, n56hpo,n624hpo)) %>% ggpairs()
 
 # CORRELAÇÕES
 
@@ -83,7 +87,7 @@ dados_longos <- dados %>% pivot_longer(
     names_prefix = "t"                    
 )
 head(dados_longos)
-View(dados_longos)
+
 # Não há perda de acompanhamento no estudo
 barplot(table(dados_longos$id))
 
@@ -133,4 +137,11 @@ p2_grupo
 dados_longos <- dados_longos %>% select(-c(obs_continua))
 
 
-# 
+# Dados Nulos e tratamentos
+
+## Dados nulos por colunas
+knitr::kable(
+colSums(is.na(dados_brutos)) %>% arrange(desc(x))) # ARRUMAR
+
+
+
