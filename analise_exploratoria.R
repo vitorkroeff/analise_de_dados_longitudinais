@@ -101,7 +101,7 @@ dados_longos$obs_continua <- as.numeric(dados_longos$observacao) #variável cont
 
 p1_sex<-ggplot(dados_longos, aes(x=obs_continua, y= citocina_t,color=sexo))+
     geom_line(aes(group=id))+ theme(legend.position="top")+
-    labs(x="Observações") + theme_minimal()+
+    labs(x="Observações", title = 'Efeito de Sexo na Citocina Tnf-receptor ') + theme_minimal()+
     scale_x_continuous(breaks = seq_along(rotulos), labels = rotulos )
 p1_sex + geom_smooth(method = "loess", se = FALSE, size = 2)
 
