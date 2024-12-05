@@ -1,10 +1,6 @@
 # Pacotes
-require(dplyr)
-require(ggplot2)
-require(tidyr)
-require(ggplot2)
-require(GGally)
-
+pacman::p_load(reshape, plyr, ggplot2, gridExtra, mice, geepack, nlme,
+               dplyr, GGally, tidyr)
 
 # Carregamento da base de dados
 
@@ -28,16 +24,16 @@ dados <- dados_brutos %>% select(c(id,sexo, idade,imc, fc,
                                    nyha, has, iap, ai, grupo,
                                    euroes, fc, creat,
                                    t1, t2, t3, t4, t5, t6,
-                                   n1anest, n2despin,n3final,
-                                   n42hpo, n56hpo,n624hpo
+                                   #n1anest, n2despin,n3final,
+                                   #n42hpo, n56hpo,n624hpo
                                    )) 
 
 
 ## GGpairs das covariáveis
 
-dados %>% select(-c(t1, t2, t3, t4, t5, t6,
-                    n1anest, n2despin,n3final,
-                    n42hpo, n56hpo,n624hpo)) %>% ggpairs()
+#dados %>% select(-c(t1, t2, t3, t4, t5, t6,
+ #                   n1anest, n2despin,n3final,
+  #                  n42hpo, n56hpo,n624hpo)) %>% ggpairs()
 
 # Tratamento dos dados categoricos
 dados$sexo <- as.factor(ifelse(dados$sexo== 1, 'M', 'F' ))
@@ -82,7 +78,7 @@ round(cor(subset(dados, grupo == 2)[,13:16]),2)
 
 dados_longos <- dados %>% pivot_longer(
     cols = starts_with("t"),               
-    names_to = "observacao",                   
+    names_to = "tempo",                   
     values_to = "citocina_t",              
     names_prefix = "t"                    
 )
@@ -97,21 +93,29 @@ barplot(table(dados_longos$id))
 rotulos <- c('Inducação \nAnestésica', 'Despinçamento', 'Final \n cirurgia',
              '2h após', '6h após', '24h após')
 
-dados_longos$obs_continua <- as.numeric(dados_longos$observacao) #variável continua para gráfico
+dados_longos$obs_continua <- as.numeric(dados_longos$tempo) #variável continua para gráfico
 
 p1_sex<-ggplot(dados_longos, aes(x=obs_continua, y= citocina_t,color=sexo))+
-    geom_line(aes(group=id))+ theme(legend.position="top")+
-    labs(x="Observações", title = 'Efeito de Sexo na Citocina Tnf-receptor ') + theme_minimal()+
-    scale_x_continuous(breaks = seq_along(rotulos), labels = rotulos )
+    geom_point()+
+    geom_line(aes(group=id))+ theme(legend.position="top")+facet_wrap(~grupo) +
+    labs(x="Observações", title = 'Evolução das medições da Citocina Tnf-receptor \n por sexo e grupo', y = 'Citocina Tnf-receptor') + theme_light()+
+    scale_x_continuous(breaks = seq_along(rotulos), labels = rotulos ) + theme(plot.title = element_text(hjust = 0.5))
 p1_sex + geom_smooth(method = "loess", se = FALSE, size = 2)
 
 
-p2_sex<-ggplot(dados_longos, aes(x=observacao,y=citocina_t,fill=sexo))+
-    geom_boxplot(notch=TRUE) +theme(legend.position="top") +
-    stat_summary(fun="mean",geom="point",size=2,color="white",
-                 position=position_dodge(width=0.75),show.legend=FALSE) +
-    labs(x="Observações") + theme_minimal() + 
-    scale_x_discrete(breaks = seq_along(rotulos), labels = rotulos )
+p2_sex <-
+    ggplot(dados_longos, aes(x = tempo, y = citocina_t, fill = sexo)) +
+    geom_boxplot(notch = TRUE) + theme(legend.position = "top") +
+    stat_summary(
+        fun = "mean",
+        geom = "point",
+        size = 2,
+        color = "white",
+        position = position_dodge(width = 0.75),
+        show.legend = FALSE
+    ) +
+    labs(x = "Observações", title = 'Evolução das medições da Citocina Tnf-receptor por sexo') + theme_light() +
+    scale_x_discrete(breaks = seq_along(rotulos), labels = rotulos)+theme(plot.title = element_text(hjust = 0.5))
 p2_sex
 
 
@@ -124,7 +128,7 @@ p1_grupo + geom_smooth(method = "loess", se = FALSE, size = 2)
 
 
 
-p2_grupo<-ggplot(dados_longos, aes(x=observacao,y=citocina_t,fill=grupo))+
+p2_grupo<-ggplot(dados_longos, aes(x=tempo,y=citocina_t,fill=grupo))+
     geom_boxplot(notch=TRUE) +theme(legend.position="top") +
     stat_summary(fun="mean",geom="point",size=2,color="white",
                  position=position_dodge(width=0.75),show.legend=FALSE) +
@@ -136,7 +140,7 @@ p2_grupo
 ### excluimos da base a variável contínua
 dados_longos <- dados_longos %>% select(-c(obs_continua))
 
-
+length(colnames(dados_longos))
 # Dados Nulos e tratamentos
 
 ## Dados nulos por colunas
@@ -145,10 +149,17 @@ colSums(is.na(dados_brutos)) %>% arrange(desc(x))) # ARRUMAR
 
 ## Comentar mais sobre
 
-# Ajuste GLS
+### Ver variável FC
 
+#### TIREI FC DO MODELO
 
+colnames(dados_longos)
 # Ajuste GEE
+
+# Arrumar
+## Independente
+ajuste_gee_indep <- geeglm(citocina_t ~ grupo *tempo, data = dados_longos, corstr = 'independence', id = id)
+summary(ajuste_gee_indep)
 
 
 # Modelo Misto
