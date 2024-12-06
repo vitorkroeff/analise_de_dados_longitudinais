@@ -5,26 +5,108 @@ date: "06/12/2024"
 output: pdf_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+# Introdução
+
+ESCREVER
+
+```{r, message=FALSE, warning=FALSE}
+# Pacotes utilizados
+pacman::p_load(reshape, plyr, ggplot2, gridExtra, mice, geepack, nlme,
+               dplyr, GGally, tidyr, modelsummary)
+
 ```
 
-## R Markdown
+# Dados
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r}
+dados_brutos <- tibble(read.table('base_de_dados.txt', header = T))
 ```
 
-## Including Plots
+Correção na informação da variável **n56hpo** e a criação de um id único para os pacientes
 
-You can also embed plots, for example:
+```{r}
+# Correção na linha 6 da variável n56hpo
+dados_brutos$n56hpo[6] <- 1130
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+# Criação de um id para os pacientes
+dados_brutos$id <- 1:length(dados_brutos$idade)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Seleção das variáveis escolhidas para o estudo
+
+```{r}
+dados <- dados_brutos %>% select(c(id,sexo, idade,imc, fc,
+                                   nyha, has, iap, ai, grupo,
+                                   euroes, fc, creat,
+                                   t1, t2, t3, t4, t5, t6,
+                                   #n1anest, n2despin,n3final,
+                                   #n42hpo, n56hpo,n624hpo
+                                   )) 
+```
+
+
+Tratamento das informações categóricas
+
+```{r}
+# Tratamento dos dados categoricos
+dados$sexo <- as.factor(ifelse(dados$sexo== 1, 'M', 'F' ))
+dados$nyha <- as.factor(dados$nyha)
+dados$has <- as.factor(dados$has)
+dados$iap <- as.factor(dados$iap)
+dados$ai <- as.factor(dados$ai)
+dados$grupo <- as.factor(dados$grupo)
+```
+
+
+## Descrição da base de dados
+
+
+Head da base
+
+```{r}
+knitr::kable(
+head(dados,5))
+```
+
+
+Descrição da base 
+
+```{r}
+# Descrições da base
+str(dados)
+```
+
+
+## Estrutura de correlação
+
+Correlação entre as medições da citocina Tnf-receptor geral. De maneira geral podemos observar que as correlações entre as medidas da citocina t, apresentam uma queda com o passar do tempo. Essa informação pode ser um indicativo de uma esturtura de correlação do tipo `AR(1)` ** MELHORAR!!**
+
+
+```{r}
+## Correlação de todos os pacientes
+round(cor(dados[,13:16]),2)
+```
+
+
+Correlação no Grupo 0
+
+```{r}
+## Correlação do grupo 0 
+round(cor(subset(dados, grupo == 0)[,13:16]),2)
+```
+
+
+Correlação no Grupo 1
+
+```{r}
+## Correlação do grupo 1
+round(cor(subset(dados, grupo == 1)[,13:16]),2)
+```
+
+
+Correlação no Grupo 2
+```{r}
+## Correlação do grupo 
+round(cor(subset(dados, grupo == 2)[,13:16]),2)
+```
+
