@@ -89,22 +89,25 @@ barplot(table(dados_longos$id))
 
 
 # Gráficos
-## Diferênça de gênero
-rotulos <- c('Inducação \nAnestésica', 'Despinçamento', 'Final \n cirurgia',
-             '2h após', '6h após', '24h após')
+rotulos <- c('1', '2', '3',
+             '4', '5', '6')
 
-dados_longos$obs_continua <- as.numeric(dados_longos$tempo) #variável continua para gráfico
+grafico1 <- ggplot(dados_longos, aes(x = tempo, y = citocina_t, group = grupo, shape = grupo, color = grupo)) +
+    stat_summary(fun = "mean", geom = "line", linewidth = 1.1) +
+    theme(legend.position = "top") +
+    labs(x = "Tempo") +
+    theme_light()
 
-p1_sex<-ggplot(dados_longos, aes(x=obs_continua, y= citocina_t,color=sexo))+
-    geom_point()+
-    geom_line(aes(group=id))+ theme(legend.position="top")+facet_wrap(~grupo) +
-    labs(x="Observações", title = 'Evolução das medições da Citocina Tnf-receptor \n por sexo e grupo', y = 'Citocina Tnf-receptor') + theme_light()+
-    scale_x_continuous(breaks = seq_along(rotulos), labels = rotulos ) + theme(plot.title = element_text(hjust = 0.5))
-p1_sex + geom_smooth(method = "loess", se = FALSE, size = 2)
+grafico2 <- ggplot(dados_longos, aes(x = tempo, y = citocina_t, group = nyha, shape = nyha, color = nyha)) +
+    stat_summary(fun = "mean", geom = "line", linewidth = 1.1) +
+    theme(legend.position = "top") +
+    labs(x = "Tempo") +
+    theme_light()
 
+grid.arrange(grafico1, grafico2, ncol = 1)
 
-p2_sex <-
-    ggplot(dados_longos, aes(x = tempo, y = citocina_t, fill = sexo)) +
+grafico3 <-
+    ggplot(dados_longos, aes(x = tempo, y = citocina_t, fill = has)) +
     geom_boxplot(notch = TRUE) + theme(legend.position = "top") +
     stat_summary(
         fun = "mean",
@@ -114,28 +117,52 @@ p2_sex <-
         position = position_dodge(width = 0.75),
         show.legend = FALSE
     ) +
-    labs(x = "Observações", title = 'Evolução das medições da Citocina Tnf-receptor por sexo') + theme_light() +
+    labs(x = "Tempo") + theme_light() +
     scale_x_discrete(breaks = seq_along(rotulos), labels = rotulos)+theme(plot.title = element_text(hjust = 0.5))
-p2_sex
 
 
-## Diferença de grupo
-p1_grupo<-ggplot(dados_longos, aes(x=obs_continua, y= citocina_t,color=grupo))+
-    geom_line(aes(group=id))+ theme(legend.position="top")+
-    labs(x="Observações") + theme_minimal()+
-    scale_x_continuous(breaks = seq_along(rotulos), labels = rotulos )
-p1_grupo + geom_smooth(method = "loess", se = FALSE, size = 2)
+grafico4 <-
+    ggplot(dados_longos, aes(x = tempo, y = citocina_t, fill = iap)) +
+    geom_boxplot(notch = TRUE) + theme(legend.position = "top") +
+    stat_summary(
+        fun = "mean",
+        geom = "point",
+        size = 2,
+        color = "white",
+        position = position_dodge(width = 0.75),
+        show.legend = FALSE
+    ) +
+    labs(x = "Tempo") + theme_light() +
+    scale_x_discrete(breaks = seq_along(rotulos), labels = rotulos)+theme(plot.title = element_text(hjust = 0.5))
 
 
 
-p2_grupo<-ggplot(dados_longos, aes(x=tempo,y=citocina_t,fill=grupo))+
-    geom_boxplot(notch=TRUE) +theme(legend.position="top") +
-    stat_summary(fun="mean",geom="point",size=2,color="white",
-                 position=position_dodge(width=0.75),show.legend=FALSE) +
-    labs(x="Observações") + theme_minimal() + 
-    scale_x_discrete(breaks = seq_along(rotulos), labels = rotulos )
+grafico5 <-
+    ggplot(dados_longos, aes(x = tempo, y = citocina_t, fill = ai)) +
+    geom_boxplot(notch = TRUE) + theme(legend.position = "top") +
+    stat_summary(
+        fun = "mean",
+        geom = "point",
+        size = 2,
+        color = "white",
+        position = position_dodge(width = 0.75),
+        show.legend = FALSE
+    ) +
+    labs(x = "Tempo") + theme_light() +
+    scale_x_discrete(breaks = seq_along(rotulos), labels = rotulos)+theme(plot.title = element_text(hjust = 0.5))
 
-p2_grupo
+grid.arrange(grafico3, grafico4, grafico5, ncol = 1)
+
+
+
+dados_longos$obs_continua <- as.numeric(dados_longos$tempo) #Criando tempo continuo
+grafico6 <-ggplot(dados_longos, aes(x=obs_continua, y= citocina_t, color=sexo))+
+    geom_point()+
+    geom_line(aes(group=id))+ theme(legend.position="top")+facet_wrap(~grupo) +
+    labs(x="Tempo") + theme_light()+
+    scale_x_continuous(breaks = seq_along(rotulos), labels = rotulos) + theme(plot.title = element_text(hjust = 0.5))
+grafico6 + geom_smooth(method = "loess", se = FALSE, size = 2)
+
 
 ### excluimos da base a variável contínua
 dados_longos <- dados_longos %>% select(-c(obs_continua))
@@ -145,7 +172,7 @@ length(colnames(dados_longos))
 
 ## Dados nulos por colunas
 knitr::kable(
-colSums(is.na(dados_brutos)) %>% arrange(desc(x))) # ARRUMAR
+colSums(is.na(dados_longos)) %>% arrange(desc(x))) # ARRUMAR
 
 ## Comentar mais sobre
 
@@ -156,13 +183,52 @@ colSums(is.na(dados_brutos)) %>% arrange(desc(x))) # ARRUMAR
 colnames(dados_longos)
 # Ajuste GEE
 
-# Arrumar
-## Independente
-ajuste_gee_indep <- geeglm(citocina_t ~ grupo *tempo, data = dados_longos, corstr = 'independence', id = id)
-summary(ajuste_gee_indep)
 
+## Independente
+
+ajuste_gee_indep <- geeglm(citocina_t ~ tempo + ai + sexo + nyha + grupo + idade + has + euroes + imc + iap,
+                           data = dados_longos,corstr = 'independence', id = id, family = 'gaussian')
+
+round(coef(summary(ajuste_gee_indep)),3)
+
+## Simetria composta
+ajuste_gee_simetria <- geeglm(citocina_t ~ tempo + ai + sexo + nyha + grupo + idade + has + euroes + imc + iap,
+                              data = dados_longos,corstr = 'exchangeable', id = id, family = 'gaussian')
+
+round(coef(summary(ajuste_gee_simetria)),3)
+
+
+## AR(1)
+ajuste_gee_ar1 <- geeglm(citocina_t ~ tempo + ai + sexo + nyha + grupo + idade + has + euroes + imc + iap,
+                         data = dados_longos,corstr = 'ar1', id = id, family = 'gaussian')
+round(coef(summary(ajuste_gee_ar1)),3)
+
+## Não estruturada
+ajuste_gee_unstructured <- geeglm(citocina_t ~ tempo + ai + sexo + nyha + grupo + idade + has + euroes + imc + iap,
+                                  data = dados_longos,corstr = 'unstructured', id = id, family = 'gaussian')
+
+round(coef(summary(ajuste_gee_unstructured)),3)
+
+### GEE AR(1) aparenta ser a estrutura correta por conta da matriz de correlação
+
+#### Vamos considerar apenas as variáveis significativas a um nível de 5% e testar a interação de grupo e tempo
+#### E com variáveis clinicamente significativas
+#### Interação grupo e tempo
+ajuste_gee_ar1_grupotempo <- geeglm(citocina_t ~ tempo*grupo +sexo +  imc + nyha + idade + euroes,
+                         data = dados_longos,corstr = 'ar1', id = id, family = 'gaussian')
+summary(ajuste_gee_ar1_grupotempo)
+
+#### interação entre sexo e grupo
+ajuste_gee_ar1_sexgrup <- geeglm(citocina_t ~ tempo+grupo*sexo+ imc + nyha + idade + euroes,
+                                 data = dados_longos,corstr = 'ar1', id = id, family = 'gaussian')
+
+summary(ajuste_gee_ar1_sexgrup) # Comentar
 
 # Modelo Misto
+
+## Intercepto aleatório
+
+
 
 # Resíduos
 
