@@ -110,3 +110,316 @@ Correlação no Grupo 2
 round(cor(subset(dados, grupo == 2)[,13:16]),2)
 ```
 
+
+## Transformação para dados Longos
+Tempos  = t1, t2, ..., t6 discretos **Explicar o tempo**
+
+```{r}
+dados_longos <- dados %>% pivot_longer(
+    cols = starts_with("t"),               
+    names_to = "tempo",                   
+    values_to = "citocina_t",              
+    names_prefix = "t"                    
+)
+knitr::kable(
+head(dados_longos), caption = 'Dados em formato longo')
+```
+
+
+
+# Gráficos
+
+```{r, message=FALSE, warning=FALSE}
+# Gráficos
+rotulos <- c('1', '2', '3',
+             '4', '5', '6')
+
+grafico1 <- ggplot(dados_longos, aes(x = tempo, y = citocina_t, group = grupo, shape = grupo, color = grupo)) +
+    stat_summary(fun = "mean", geom = "line", linewidth = 1.1) +
+    theme(legend.position = "top") +
+    labs(x = "Tempo") +
+    theme_light()
+
+grafico2 <- ggplot(dados_longos, aes(x = tempo, y = citocina_t, group = nyha, shape = nyha, color = nyha)) +
+    stat_summary(fun = "mean", geom = "line", linewidth = 1.1) +
+    theme(legend.position = "top") +
+    labs(x = "Tempo") +
+    theme_light()
+
+grid.arrange(grafico1, grafico2, ncol = 1)
+```
+
+
+```{r, warning=FALSE, message=FALSE}
+grafico3 <-
+    ggplot(dados_longos, aes(x = tempo, y = citocina_t, fill = has)) +
+    geom_boxplot(notch = TRUE) + theme(legend.position = "top") +
+    stat_summary(
+        fun = "mean",
+        geom = "point",
+        size = 2,
+        color = "white",
+        position = position_dodge(width = 0.75),
+        show.legend = FALSE
+    ) +
+    labs(x = "Tempo") + theme_light() +
+    scale_x_discrete(breaks = seq_along(rotulos), labels = rotulos)+theme(plot.title = element_text(hjust = 0.5))
+
+
+grafico4 <-
+    ggplot(dados_longos, aes(x = tempo, y = citocina_t, fill = iap)) +
+    geom_boxplot(notch = TRUE) + theme(legend.position = "top") +
+    stat_summary(
+        fun = "mean",
+        geom = "point",
+        size = 2,
+        color = "white",
+        position = position_dodge(width = 0.75),
+        show.legend = FALSE
+    ) +
+    labs(x = "Tempo") + theme_light() +
+    scale_x_discrete(breaks = seq_along(rotulos), labels = rotulos)+theme(plot.title = element_text(hjust = 0.5))
+
+
+
+grafico5 <-
+    ggplot(dados_longos, aes(x = tempo, y = citocina_t, fill = ai)) +
+    geom_boxplot(notch = TRUE) + theme(legend.position = "top") +
+    stat_summary(
+        fun = "mean",
+        geom = "point",
+        size = 2,
+        color = "white",
+        position = position_dodge(width = 0.75),
+        show.legend = FALSE
+    ) +
+    labs(x = "Tempo") + theme_light() +
+    scale_x_discrete(breaks = seq_along(rotulos), labels = rotulos)+theme(plot.title = element_text(hjust = 0.5))
+
+grid.arrange(grafico3, grafico4, grafico5, ncol = 1)
+
+```
+
+
+
+```{r}
+dados_longos$obs_continua <- as.numeric(dados_longos$tempo) #Criando tempo continuo
+grafico6 <-ggplot(dados_longos, aes(x=obs_continua, y= citocina_t, color=sexo))+
+    geom_point()+
+    geom_line(aes(group=id))+ theme(legend.position="top")+facet_wrap(~grupo) +
+    labs(x="Tempo") + theme_light()+
+    scale_x_continuous(breaks = seq_along(rotulos), labels = rotulos) + theme(plot.title = element_text(hjust = 0.5))
+grafico6 + geom_smooth(method = "loess", se = FALSE, size = 2)
+
+
+### excluimos da base a variável contínua
+dados_longos <- dados_longos %>% select(-c(obs_continua))
+```
+
+
+# Modelos Marginais (GEE)
+
+Para iniciar a modelagem dos dados, optamos por utilizar os Modelos de Equações de Estimação Generalizadas (GEE) como modelo marginal. Ajustaremos quatro modelos GEE, cada um assumindo uma estrutura de correlação diferente: Independente, Simetria Composta, AR(1) e Não Estruturada. Nesse processo, utilizaremos todas as variáveis selecionadas, sem incluir, neste momento, termos de interação entre as variáveis.
+
+A equação dos modelos abaixo modelo ser definida como:
+
+$$ESCREVER \\ ALGO \beta$$
+
+
+## Independente
+
+```{r}
+ajuste_gee_indep <- geeglm(citocina_t ~ tempo + ai + sexo + nyha + grupo + idade + has + euroes + imc + iap,
+                           data = dados_longos,corstr = 'independence', id = id, family = 'gaussian')
+
+round(coef(summary(ajuste_gee_indep)),3)
+```
+
+
+## Simetria Composta
+
+```{r}
+ajuste_gee_simetria <- geeglm(citocina_t ~ tempo + ai + sexo + nyha + grupo + idade + has + euroes + imc + iap,
+                              data = dados_longos,corstr = 'exchangeable', id = id, family = 'gaussian')
+
+round(coef(summary(ajuste_gee_simetria)),3)
+```
+
+
+## AR(1)
+
+```{r}
+ajuste_gee_ar1 <- geeglm(citocina_t ~ tempo + ai + sexo + nyha + grupo + idade + has + euroes + imc + iap,
+                         data = dados_longos,corstr = 'ar1', id = id, family = 'gaussian')
+round(coef(summary(ajuste_gee_ar1)),3)
+```
+
+## Não Estruturada
+
+```{r}
+ajuste_gee_unstructured <- geeglm(citocina_t ~ tempo + ai + sexo + nyha + grupo + idade + has + euroes + imc + iap,
+                                  data = dados_longos,corstr = 'unstructured', id = id, family = 'gaussian')
+
+round(coef(summary(ajuste_gee_unstructured)),3)
+```
+
+
+## Seleção de Variáveis e Interações
+
+De maneira geral, observamos que os modelos estimaram coeficientes muito próximos, tanto em termos de magnitude quanto em relação à significância estatística de cada variável. Diante disso, optamos por adotar o modelo GEE com estrutura de correlação **AR(1)**. Essa escolha se baseia na análise das correlações das medidas da citocina TNF-receptor nos diferentes tempos, que indicaram um padrão de decaimento conforme o intervalo entre as medições aumenta.
+
+### Seleção de Variáveis
+
+Com base no resultado da função `summary()` aplicada ao modelo GEE com estrutura de correlação AR(1) (exibido novamente abaixo), observamos que as seguintes variáveis não apresentam significância estatística a um nível de 5%: **Variável A**, **Variável C**, **Variável D**, **Variável E** e **Variável G**.
+
+No entanto, as variáveis **A**, **C** e **D** possuem relevância clínica no contexto do estudo. Por esse motivo, decidimos mantê-las no modelo, mesmo que não tenham demonstrado significância no modelo ajustado
+
+
+```{r}
+round(coef(summary(ajuste_gee_ar1)),3)
+```
+
+
+### Interação de Variávies
+
+Com base no modelo inicial e nas variáveis previamente selecionadas, decidimos testar termos de interação para avaliar se eles possuem relevância no contexto do estudo. O primeiro termo de interação a ser analisado é o efeito entre **Grupo** e o **tempo**. 
+
+Abaixo apresentamos um resumo do modelo através da função ``summary()`.
+
+```{r}
+ajuste_gee_ar1_grupotempo <- geeglm(citocina_t ~ tempo*grupo +sexo +  imc + nyha + idade + euroes,
+                         data = dados_longos,corstr = 'ar1', id = id, family = 'gaussian')
+round(coef(summary(ajuste_gee_ar1_grupotempo)),4)
+```
+
+Com base nos resultados do modelo, podemos observar que, embora a interação entre o **Tempo 4** e o **Grupo 2** seja significativa, os efeitos nos demais níveis de tempo e grupo não parecem ser significativos. Isso pode indicar a ausência de um efeito conjunto entre **tempo** e **grupo** no modelo analisado.
+
+
+Como segunda hipótese, decidimos testar a interação entre as variáveis **Sexo** e **Grupo** para avaliar se há relevância dessa relação.
+
+$$EQUAÇÃO 3 \beta_1+\beta_6$$
+
+```{r}
+# interação entre sexo e grupo
+ajuste_gee_ar1_sexgrup <- geeglm(citocina_t ~ tempo+grupo*sexo+ imc + nyha + idade + euroes,
+                                 data = dados_longos,corstr = 'ar1', id = id, family = 'gaussian')
+
+summary(ajuste_gee_ar1_sexgrup)
+```
+
+Diferentemente do ajuste anterior, a interação entre os diferentes níveis de **Sexo** e **Grupo**, são significativas. Indicando possívelmente indicando um efeito combinado dessas duas variáveis na variável resposta.
+
+
+**INTERPRETAR RESULTADOS**
+
+# Modelos Mistos
+
+Uma abordagem alternativa para essa análise seria a utilização de **modelos mistos**, que permitem a inclusão de interceptos e/ou inclinações aleatórias para capturar a variabilidade intra e interpacientes 
+
+## Ajuste 1: Intercepto Aleatório
+Como primeiro passo, ajustaremos um modelo misto com **intercepto aleatório** para todas as variáveis inicialmente selecionadas. Em seguida, realizaremos uma seleção de variáveis para os ajustes posteriores
+
+Podemos observar que os efeitos de grupo e das variáveis A, B e C não parecem ser significativos para o ajuste. Porém, da mesma forma que o modelos GEE, mantivemos as variáveis que são clinicamente significativas para o modelo do estudo.
+
+```{r}
+## Intercepto aleatório
+
+ajuste_misto_1 <- lme(citocina_t ~ tempo + ai + sexo + nyha + grupo + idade + has + euroes + imc + iap,
+                              data = dados_longos, random = ~1|id)
+
+round(coef(summary(ajuste_misto_1)),4)
+
+```
+
+## Ajuste 2: Intercepto Aleatório e Variáveis Clinicas
+
+Como alternativa ao modelo anterior, decidos ajustar um modelo apenas com as variáveis clinicamente significativas, mas mantendo o efeito aleatório no intercepto. Abaixo temos um resumo do modelo:
+
+```{r}
+ajuste_misto_2<- lme(citocina_t ~ tempo+grupo +sexo+ imc + nyha + idade + euroes,
+                                      data = dados_longos, random = ~1|id)
+
+round(coef(summary(ajuste_misto_2)),4)
+```
+
+
+### Ajuste 3: Intercepto Aleatório e Interação
+
+Um segundo ajuste a ser testado, seria o modelo misto com intercepto aleatório e a interação entre entre **Sexo** e **Grupo**.
+
+Abaixo temos um resumo do novo modelo ajustado
+
+```{r}
+## Intercepto aleatório: Interação sexo grupo
+ajuste_misto_3<- lme(citocina_t ~ tempo+grupo*sexo - grupo+ imc + nyha + idade + euroes,
+                                      data = dados_longos, random = ~1|id)
+
+round(coef(summary(ajuste_misto_3)),4)
+```
+
+Olhando para o resumo do modelo, não parace haver um efeito claro do termo de interação para esse modelo.
+
+### Ajuste 4: Efeito Aleatório no Grupo e Interação
+
+Como outra alternativa, iremos ajustar um modelo com o efeito aleatório na variável de grupo, afim de verificar se produz um ajuste melhor em comparação ao anterior. Novamente, decidos optar pelo termo de interação entre **Sexo** e **Grupo**.
+Abaixo temos um resumo do modelo ajustado:
+
+```{r}
+ajuste_misto_4<- lme(citocina_t ~ tempo+grupo * sexo - grupo+ imc + nyha + idade + euroes,
+                                      data = dados_longos, random = ~1|grupo)
+
+round(coef(summary(ajuste_misto_4)),4)
+```
+
+Não parece haver uma diferença muito expressiva em relação ao modelo anteriior ao observarmos os termos de interação.
+
+
+# Comparação dos Ajustes
+
+Ao todo, ajustamos quatro modelos mistos, descritos a seguir:
+
+1. **Ajuste 1**: Inclui todas as variáveis e um **intercepto aleatório**.
+2. **Ajuste 2**: Inclui as variáveis clinicamente relevantes e um **intercepto aleatório**.
+3. **Ajuste 3**: Inclui **variáveis selecionadas**, um **intercepto aleatório** e um **termo de interação**.
+4. **Ajuste 4**: Inclui um **efeito aleatório** na variável de **grupo** e um **termo de interação**.
+
+Para comparar esses ajustes, utilizaremos como critérios as medidas de **AIC** e **BIC** dos três modelos.
+
+```{r}
+knitr::kable(
+data.frame(
+Modelos = c('Ajuste 1', 'Ajuste 2', 'Ajuste 3', 'Ajuste 4'),
+AIC = c(AIC(ajuste_misto_1), AIC(ajuste_misto_2), AIC(ajuste_misto_3), AIC(ajuste_misto_4)),
+BIC = c(BIC(ajuste_misto_1), BIC(ajuste_misto_2), BIC(ajuste_misto_3), BIC(ajuste_misto_4))
+))
+```
+
+Podemos observar que o modelo que produz o menor AIC e BIC, parece ser o modelo que  inclui todas as variáveis e um **intercepto aleatório** (Ajuste 1).
+
+
+# Análise de Resíduos
+
+Com base no medelo misto selecionado, **Ajuste**, trazemos abaixo um gráfico de resíduos das medições da citocina Tnf-receptor ajustadas pelo modelo, nos separados por pacientes.
+
+```{r, message=FALSE, warning=FALSE}
+ plot(ajuste_misto_1,citocina_t ~ fitted(.) | id,layout= c(8,4),between= list(y= c(0, 0.5, 0)),
+ abline= c(0,1))
+```
+
+
+Com base nos gráficos acima, podemos observar que o modelo aparenta apresentar um bom ajuste para os indivíduos. Porém, podemos ver que para alguns pacientes, os pontos se afastam bastante da reta identidade, indicando que, para esse pacientes, o modelo não se ajusta tão bem assim.
+
+
+Outra análise gráfica que podemos realizar, são os gráficos de resíduos padronizados por tempo, que são exibidos abaixo:
+
+
+```{r}
+plot(ajuste_misto_1, residuals(., type= "p") ~ fitted(.) | tempo)
+```
+
+
+De maneira geral, os resíduos aparentam se distribuir em torno de zero, o que poderia ser considerado um indicativo de um bom ajuste. Porém, podemos notar que a distribuição dos resíduos não segue um padrão aleatório na maior porção dos tempos, o que indica que esse modelo pode não ser adequado aos dados.
+
+# Conclusão
+
+ESCREVER
