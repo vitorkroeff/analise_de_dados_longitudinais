@@ -1,6 +1,6 @@
 # Pacotes
 pacman::p_load(reshape, plyr, ggplot2, gridExtra, mice, geepack, nlme,
-               dplyr, GGally, tidyr)
+               dplyr, GGally, tidyr, modelsummary)
 
 # Carregamento da base de dados
 
@@ -224,9 +224,11 @@ ajuste_gee_ar1_sexgrup <- geeglm(citocina_t ~ tempo+grupo*sexo+ imc + nyha + ida
 
 summary(ajuste_gee_ar1_sexgrup) # Comentar
 
-# Modelo Misto
+modelsummary(ajuste_gee_ar1_sexgrup)
 
+# Modelo Misto
 ## Intercepto aleatório
+
 
 
 
