@@ -12,7 +12,7 @@ ESCREVER
 ```{r, message=FALSE, warning=FALSE}
 # Pacotes utilizados
 pacman::p_load(reshape, plyr, ggplot2, gridExtra, mice, geepack, nlme,
-               dplyr, GGally, tidyr, modelsummary)
+               dplyr, GGally, tidyr)
 
 ```
 
@@ -280,11 +280,11 @@ round(coef(summary(ajuste_gee_ar1)),3)
 ```
 
 
-### Interação de Variávies
+### Interação de Variáveis
 
 Com base no modelo inicial e nas variáveis previamente selecionadas, decidimos testar termos de interação para avaliar se eles possuem relevância no contexto do estudo. O primeiro termo de interação a ser analisado é o efeito entre **Grupo** e o **tempo**. 
 
-Abaixo apresentamos um resumo do modelo através da função ``summary()`.
+Abaixo apresentamos um resumo do modelo através da função `summary()`.
 
 ```{r}
 ajuste_gee_ar1_grupotempo <- geeglm(citocina_t ~ tempo*grupo +sexo +  imc + nyha + idade + euroes,
@@ -422,4 +422,6 @@ De maneira geral, os resíduos aparentam se distribuir em torno de zero, o que p
 
 # Conclusão
 
-ESCREVER
+modelo gee grupo e sexo sign / outro não
+grupo nao foi
+
